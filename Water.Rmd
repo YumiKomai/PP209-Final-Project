@@ -1,0 +1,72 @@
+---
+title: "final project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(gridExtra)
+library(stargazer)
+library(readr)
+library(foreign)
+library(lfe)
+library(tidyr)
+library(reshape)
+
+water_df <- read.csv("/Users/jiahuizhang/Documents/UCLA 2.2/Causal inferences/Final Project/water.csv")
+
+```
+
+```{r}
+# wide to long data
+# ID might need to be factor
+watero_df <- water_df %>% 
+  select(id, age, height, caloric_intake, pre_sleep, pre_exercise, pre_weight, pre_composition, pre_water, Di, drop_out) %>% 
+  mutate(postperiod = 0)
+
+watero_df <- rename(watero_df, c(pre_weight="weight", pre_composition = "composition", pre_water = "water" ))
+
+water1_df <- water_df %>% 
+  select(id, age, height, caloric_intake, pre_sleep, pre_exercise, post_weight, post_composition, post_water, Di, drop_out) %>% 
+  mutate(postperiod = 1)
+
+water1_df <- rename(water1_df, c(post_weight="weight", post_composition = "composition", post_water = "water" ))
+
+waterdata_df <- rbind(watero_df, water1_df)
+
+write.csv(waterdata_df, file = "/Users/jiahuizhang/Documents/UCLA 2.2/Causal inferences/Final Project/waterdata.csv")
+```
+
+1. Non-compliance, whether some girls from the treatment group were not treated, whether some girls from the control group received treatment
+
+```{r}
+treatment <- water_df %>%
+  mutate(extrawater = post_water - pre_water) %>%
+  filter(Di == 1) 
+shapiro.test(treatment$extrawater)
+require(graphics)
+qqnorm(treatment$extrawater);qqline(treatment$extrawater, col = 2)
+t.test(treatment$extrawater, mu=1.5)
+# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the treatment group
+
+control <- water_df %>%
+  mutate(extrawater = post_water - pre_water) %>%
+  filter(Di == 0) 
+shapiro.test(control$extrawater)
+require(graphics)
+qqnorm(control$extrawater);qqline(control$extrawater, col = 2)
+t.test(control$extrawater, mu=0)
+# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the control group
+  
+```
+The null-hypothesis of the shapiro test is that the population is normally distributed. Thus, if the p-value is less than the chosen alpha level, then the null hypothesis is rejected and there is evidence that the data tested are not from a normally distributed population; in other words, the data are not normal.
+
+Conclusion: only the treatment group received treatment and all of them received treatment; no one in the control group received any treatment and the amount of water they drunk did not differ significantly from what they had drunk before the experiment.  
+
+2. 
+
+
+
