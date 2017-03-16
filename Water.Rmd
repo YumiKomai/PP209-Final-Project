@@ -17,7 +17,7 @@ library(tidyr)
 library(reshape)
 library(ebal)
 
-water_df <- read.csv("/Users/jiahuizhang/Documents/UCLA 2.2/Causal inferences/Final Project/water.csv")
+water_df <- read.csv("water.csv")
 
 ```
 
@@ -38,7 +38,7 @@ water1_df <- rename(water1_df, c(post_weight="weight", post_composition = "compo
 
 waterdata_df <- rbind(watero_df, water1_df)
 
-write.csv(waterdata_df, file = "/Users/jiahuizhang/Documents/UCLA 2.2/Causal inferences/Final Project/waterdata.csv")
+write.csv(waterdata_df, file = "waterdata.csv")
 ```
 
 1. Non-compliance, whether some girls from the treatment group were not treated, whether some girls from the control group received treatment
