@@ -132,6 +132,9 @@ m_list[[8]] <- felm(pre_composition ~ treatment | 0 | 0 | id, data = water_df)
 
  
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
 
 
