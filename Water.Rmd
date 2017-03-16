@@ -15,6 +15,7 @@ library(foreign)
 library(lfe)
 library(tidyr)
 library(reshape)
+library(ebal)
 
 water_df <- read.csv("/Users/jiahuizhang/Documents/UCLA 2.2/Causal inferences/Final Project/water.csv")
 
@@ -66,11 +67,71 @@ The null-hypothesis of the shapiro test is that the population is normally distr
 
 Conclusion: only the treatment group received treatment and all of them received treatment; no one in the control group received any treatment and the amount of water they drunk did not differ significantly from what they had drunk before the experiment.  
 
-2. 
+2. Balance table: first balance table for two groups before treatment; then balance table for two groups considering sample attrition.
+```{r}
+water_df <- water_df %>% 
+  filter(drop_out == 0) %>%
+  mutate(treatment = relevel(factor(Di), ref = "0"))
 
-testest
 
-jiahui
-Yumi
+# Estimating differences between groups:
+m_list <- list()
+m_list[[1]] <- felm(age ~ treatment | 0 | 0 | id, data = water_df)
+m_list[[2]] <- felm(height ~ treatment | 0 | 0 | id, data = water_df) 
+m_list[[3]] <- felm(caloric_intake ~ treatment | 0 | 0 | id, data = water_df)
+
+
+# Creating Table:
+stargazer(m_list,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("age", "height", "caloric_intake"), 
+covariate.labels = c("Control Mean", "treatment"), model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates",
+no.space = TRUE)
+
+```
+
+```{r}
+m_list2 <- list()
+m_list2[[1]] <- felm(pre_sleep ~ treatment | 0 | 0 | id, data = water_df) 
+m_list2[[2]] <- felm(pre_exercise ~ treatment | 0 | 0 | id, data = water_df) 
+m_list2[[3]] <- felm(pre_water ~ treatment | 0 | 0 | id, data = water_df) 
+
+stargazer(m_list2,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("sleep", "exercise", "water"), 
+covariate.labels = c("Control Mean", "treatment"), 
+model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates",
+no.space = TRUE)
+
+
+```
+
+```{r}
+m_list[[7]] <- felm(pre_weight ~ treatment | 0 | 0 | id, data = water_df) 
+m_list[[8]] <- felm(pre_composition ~ treatment | 0 | 0 | id, data = water_df) 
+
+```
+
+
+
+```
+
+ 
+
+
 
 
