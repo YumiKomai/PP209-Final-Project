@@ -72,16 +72,14 @@ Conclusion: only the treatment group received treatment and all of them received
 2. Balance table: first balance table for two groups before treatment; then balance table for two groups considering sample attrition.
 ```{r}
 water_df <- water_df %>% 
-  filter(drop_out == 0) %>%
   mutate(treatment = relevel(factor(Di), ref = "0"))
 
 
 # Estimating differences between groups:
 m_list <- list()
-m_list[[1]] <- felm(age ~ treatment | 0 | 0 | id, data = water_df)
-m_list[[2]] <- felm(height ~ treatment | 0 | 0 | id, data = water_df) 
-m_list[[3]] <- felm(caloric_intake ~ treatment | 0 | 0 | id, data = water_df)
-
+m_list[[1]] <- felm(age ~ Di | 0 | 0 | id, data = water_df)
+m_list[[2]] <- felm(height ~ Di | 0 | 0 | id, data = water_df) 
+m_list[[3]] <- felm(caloric_intake ~ Di | 0 | 0 | id, data = water_df)
 
 # Creating Table:
 stargazer(m_list,
@@ -101,9 +99,9 @@ no.space = TRUE)
 
 ```{r}
 m_list2 <- list()
-m_list2[[1]] <- felm(pre_sleep ~ treatment | 0 | 0 | id, data = water_df) 
-m_list2[[2]] <- felm(pre_exercise ~ treatment | 0 | 0 | id, data = water_df) 
-m_list2[[3]] <- felm(pre_water ~ treatment | 0 | 0 | id, data = water_df) 
+m_list2[[1]] <- felm(pre_sleep ~ Di | 0 | 0 | id, data = water_df) 
+m_list2[[2]] <- felm(pre_exercise ~ Di | 0 | 0 | id, data = water_df) 
+m_list2[[3]] <- felm(pre_water ~ Di | 0 | 0 | id, data = water_df) 
 
 stargazer(m_list2,
 type = "text",
@@ -123,20 +121,37 @@ no.space = TRUE)
 ```
 
 ```{r}
-m_list[[7]] <- felm(pre_weight ~ treatment | 0 | 0 | id, data = water_df) 
-m_list[[8]] <- felm(pre_composition ~ treatment | 0 | 0 | id, data = water_df) 
+m_list3 <- list()
+m_list3[[1]] <- felm(pre_weight ~ Di | 0 | 0 | id, data = water_df) 
+m_list3[[2]] <- felm(pre_composition ~ Di | 0 | 0 | id, data = water_df) 
 
+stargazer(m_list3,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("weight", "composition"), 
+covariate.labels = c("Control Mean", "treatment"), 
+model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates",
+no.space = TRUE)
+
+
+```
+
+```{r, results="asis"}
+waterdata_df <- read.csv("waterdata.csv")
+waterdata_df <- waterdata_df %>%
+  filter(drop_out == 0) %>%
+  group_by(Di, postperiod) %>% summarise(avg_weight = round(mean(weight, na.rm = TRUE), 2), avg_comp = round(mean(composition, na.rm = TRUE), 2), avg_BMI = round(mean(weight/height^2, na.rm = TRUE), 2))
+
+stargazer()
 ```
 
 
 
-```
-
- 
-
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
 
 
