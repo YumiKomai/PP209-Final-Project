@@ -23,8 +23,9 @@ water_df <- read.csv("water.csv")
 
 ```
 
-```{r}
+```{r, echo=FALSE}
 # wide to long data
+#cleaning up the data
 # ID might need to be factor
 watero_df <- water_df %>% 
   select(id, age, height, caloric_intake, pre_sleep, pre_exercise, pre_weight, pre_composition, pre_water, Di, drop_out) %>% 
@@ -43,37 +44,11 @@ waterdata_df <- rbind(watero_df, water1_df)
 write.csv(waterdata_df, file = "waterdata.csv")
 ```
 
-1. Non-compliance, whether some girls from the treatment group were not treated, whether some girls from the control group received treatment
 
-```{r}
-treatment <- water_df %>%
-  mutate(extrawater = post_water - pre_water) %>%
-  filter(Di == 1) 
-shapiro.test(treatment$extrawater)
-require(graphics)
-qqnorm(treatment$extrawater);qqline(treatment$extrawater, col = 2)
-t.test(treatment$extrawater, mu=1.5)
-# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the treatment group
-
-control <- water_df %>%
-  mutate(extrawater = post_water - pre_water) %>%
-  filter(Di == 0) 
-shapiro.test(control$extrawater)
-require(graphics)
-qqnorm(control$extrawater);qqline(control$extrawater, col = 2)
-t.test(control$extrawater, mu=0)
-# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the control group
-  
-```
-The null-hypothesis of the shapiro test is that the population is normally distributed. Thus, if the p-value is less than the chosen alpha level, then the null hypothesis is rejected and there is evidence that the data tested are not from a normally distributed population; in other words, the data are not normal.
-
-Conclusion: only the treatment group received treatment and all of them received treatment; no one in the control group received any treatment and the amount of water they drunk did not differ significantly from what they had drunk before the experiment.  
-
-2. Balance table: first balance table for two groups before treatment; then balance table for two groups considering sample attrition.
-```{r}
+1. Balance table: first balance table for two groups before treatment; then balance table for two groups considering sample attrition.
+```{r,echo=FALSE}
 water_df <- water_df %>% 
   mutate(treatment = relevel(factor(Di), ref = "0"))
-
 
 # Estimating differences between groups:
 m_list <- list()
@@ -120,7 +95,7 @@ no.space = TRUE)
 
 ```
 
-```{r}
+```{r, echo=FALSE}
 m_list3 <- list()
 m_list3[[1]] <- felm(pre_weight ~ Di | 0 | 0 | id, data = water_df) 
 m_list3[[2]] <- felm(pre_composition ~ Di | 0 | 0 | id, data = water_df) 
@@ -142,16 +117,132 @@ no.space = TRUE)
 
 ```
 
-```{r, results="asis"}
-waterdata_df <- read.csv("waterdata.csv")
-waterdata_df <- waterdata_df %>%
-  filter(drop_out == 0) %>%
-  group_by(Di, postperiod) %>% summarise(avg_weight = round(mean(weight, na.rm = TRUE), 2), avg_comp = round(mean(composition, na.rm = TRUE), 2), avg_BMI = round(mean(weight/height^2, na.rm = TRUE), 2))
 
-stargazer()
+2. Dropping out 
+Checking the coveriates after removing dropout
+Checking the dropout rates
+
+```{r, results="asis"}
+#remove dropouts
+waterdrop_df <- water_df %>% filter(drop_out==0)
+
+#Checking coveriates
+
+d_list <- list()
+d_list[[1]] <- felm(age ~ Di | 0 | 0 | id, data = waterdrop_df)
+d_list[[2]] <- felm(height ~ Di | 0 | 0 | id, data = waterdrop_df) 
+d_list[[3]] <- felm(caloric_intake ~ Di | 0 | 0 | id, data = waterdrop_df)
+
+# Creating Table:
+stargazer(d_list,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("age", "height", "caloric_intake"), 
+covariate.labels = c("Control Mean", "treatment"), model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates After Removing Dropout",
+no.space = TRUE)
+```
+
+```{r echo=FALSE}
+d_list2 <- list()
+d_list2[[1]] <- felm(pre_sleep ~ Di | 0 | 0 | id, data = waterdrop_df)
+d_list2[[2]] <- felm(pre_exercise ~ Di | 0 | 0 | id, data = waterdrop_df) 
+d_list2[[3]] <- felm(pre_water ~ Di | 0 | 0 | id, data = waterdrop_df)
+
+# Creating Table:
+stargazer(d_list2,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("sleep", "exercise", "water"), 
+covariate.labels = c("Control Mean", "treatment"), model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates After Removing Dropout",
+no.space = TRUE)
 ```
 
 
+```{r,echo=FALSE}
+d_list3 <- list()
+d_list3[[1]] <- felm(pre_weight ~ Di | 0 | 0 | id, data = waterdrop_df) 
+d_list3[[2]] <- felm(pre_composition ~ Di | 0 | 0 | id, data = waterdrop_df) 
 
 
+#Creating Balance Table:
+stargazer(d_list3,
+type = "text",
+digits = 2,
+intercept.bottom = FALSE,
+dep.var.labels = c("weight", "composition"), 
+covariate.labels = c("Control Mean", "treatment"), model.numbers = FALSE,
+report = "vcp*",
+star.cutoffs = c(.05, NA, NA),
+notes = "$^{*}$p$<$0.05; Clustered SEs",
+keep.stat = "n",
+title = "Balance by Pre-Treatment Covariates After Removing Dropout",
+no.space = TRUE)
+```
 
+
+```{r, results="asis", echo=FALSE}
+#Checking the dropout rates
+
+dropout <- water_df %>% group_by(Di) %>%
+  summarise(dropout_rate = mean(drop_out == 1))
+dropout
+
+```
+
+
+3. Non-compliance, whether some girls from the treatment group were not treated, whether some girls from the control group received treatment
+
+```{r}
+treatment <- water_df %>%
+  mutate(extrawater = post_water - pre_water) %>%
+  filter(Di == 1) 
+shapiro.test(treatment$extrawater)
+require(graphics)
+qqnorm(treatment$extrawater);qqline(treatment$extrawater, col = 2)
+t.test(treatment$extrawater, mu=1.5)
+# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the treatment group
+
+control <- water_df %>%
+  mutate(extrawater = post_water - pre_water) %>%
+  filter(Di == 0) 
+shapiro.test(control$extrawater)
+require(graphics)
+qqnorm(control$extrawater);qqline(control$extrawater, col = 2)
+t.test(control$extrawater, mu=0)
+# shapiro test suggests it's normally distributed; ttest can be interpreted as there's no non-compliance for the control group
+  
+```
+
+
+The null-hypothesis of the shapiro test is that the population is normally distributed. Thus, if the p-value is less than the chosen alpha level, then the null hypothesis is rejected and there is evidence that the data tested are not from a normally distributed population; in other words, the data are not normal.
+
+Conclusion: only the treatment group received treatment and all of them received treatment; no one in the control group received any treatment and the amount of water they drunk did not differ significantly from what they had drunk before the experiment.  
+
+
+4.Estimate ATE
+
+```{r, results="asis"}
+waterdata_df <- read.csv("waterdata.csv")
+waterdata_df <- waterdata_df %>%
+  filter(drop_out == 0) %>%  
+  group_by(Di, postperiod) %>% summarise(avg_weight = round(mean(weight, na.rm = TRUE), 2), avg_comp = round(mean(composition, na.rm = TRUE), 2), avg_BMI = round(mean(weight/height^2, na.rm = TRUE), 2))
+
+#Estimate ATE
+
+waterdata_df <- waterdata_df %>% group_by(postperiod)
+  summarise (ATE_weight = diff(avg_weight))
+  
+
+```
