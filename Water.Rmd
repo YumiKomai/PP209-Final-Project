@@ -240,9 +240,11 @@ waterdata_df <- waterdata_df %>%
   group_by(Di, postperiod) %>% summarise(avg_weight = round(mean(weight, na.rm = TRUE), 2), avg_comp = round(mean(composition, na.rm = TRUE), 2), avg_BMI = round(mean(weight/height^2, na.rm = TRUE), 2))
 
 #Estimate ATE
+waterdata_df %>% group_by(Di) %>%
+  summarise (ATE_weight = diff(avg_weight), 
+             ATE_comp = diff(avg_comp), 
+             ATE_BMI = diff(avg_BMI))
 
-waterdata_df <- waterdata_df %>% group_by(postperiod)
-  summarise (ATE_weight = diff(avg_weight))
+
   
-
 ```
