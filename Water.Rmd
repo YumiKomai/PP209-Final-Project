@@ -199,6 +199,9 @@ dropout <- water_df %>% group_by(Di) %>%
   summarise(dropout_rate = mean(drop_out == 1))
 dropout
 
+#ztest
+prop.test(x = c(4, 5), n = c(50, 50), correct = FALSE)
+
 ```
 
 
@@ -245,6 +248,25 @@ waterdata_df %>% group_by(Di) %>%
              ATE_comp = diff(avg_comp), 
              ATE_BMI = diff(avg_BMI))
 
+#Before-After plot
 
+waterdata_df %>% group_by(Di) %>%
+  ggplot(aes(x=postperiod, y=avg_weight, group=Di)) +
+  geom_line(aes(colour = Di)) +
+  labs(title = "Before-After (weight)", x = "Period", y = "Average Weight") +
+  theme_bw()
   
+waterdata_df %>% group_by(Di) %>%
+  ggplot(aes(x=postperiod, y=avg_comp, group=Di)) +
+  geom_path(aes(colour = Di)) +
+  labs(title = "Before-After (body composition)", x = "Period", y = "Average Composition") +
+  theme_bw()
+
+
+waterdata_df %>% 
+  ggplot(aes(x=postperiod, y=avg_BMI, group=Di)) +
+  geom_path(aes(colour = Di)) +
+  labs(title = "Before-After (BMT)", x = "Period", y = "BMI") +
+  theme_bw()
+
 ```
