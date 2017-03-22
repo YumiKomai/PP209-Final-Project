@@ -6,46 +6,51 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(dplyr)
 library(stringr)
-library(gridExtra)
 library(stargazer)
 library(readr)
-library(foreign)
 library(lfe)
-library(tidyr)
-library(reshape)
 library(ebal)
 
-water_df <- read.csv("water.csv")
+water_df <- read.csv("C:\\Users\\Justin Ho\\Downloads\\PP209-Final-Project-master\\water.csv")
 
 ```
 
-```{r, echo=FALSE}
-# wide to long data
-#cleaning up the data
-# ID might need to be factor
-watero_df <- water_df %>% 
-  select(id, age, height, caloric_intake, pre_sleep, pre_exercise, pre_weight, pre_composition, pre_water, Di, drop_out) %>% 
-  mutate(postperiod = 0)
+Final Project 
 
-watero_df <- rename(watero_df, c(pre_weight="weight", pre_composition = "composition", pre_water = "water" ))
+Yumi Komai, Toru Terai, Jiahui Zhang 
 
-water1_df <- water_df %>% 
-  select(id, age, height, caloric_intake, pre_sleep, pre_exercise, post_weight, post_composition, post_water, Di, drop_out) %>% 
-  mutate(postperiod = 1)
+Article: Effect of Drinking Excessive Water Induced Thermogenesis on Body Weight, Body Mass Index and Body Composition of Overweight Subjects, can be accessed at 
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3809630/pdf/jcdr-7-1894.pdf 
+Published at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3809630/ 
 
-water1_df <- rename(water1_df, c(post_weight="weight", post_composition = "composition", post_water = "water" ))
+1. Summary of the article 
+    This report examines the impact of drinking excessive water on weight and body fat reduction. The study was conducted at the hospital in Mumbai, India. The researchers selected 50 overweight girls at the age of 18 to 23 as participants (the selection method is unclear) and conducted a before-after analysis. The participants were asked to drink 500ml additional water before every meal three times a day for eight weeks, that is, 1.5 litres more water per day. None of them had any serious illness and eating disorders. In addition, the researchers explained purpose and intention of the study beforehand.
+This experiment used body weight, body mass index (BMI) and body composition scores as outcome indicators, and they were measured at the before and after period. 
+.  	Body Weight 
+. 	BMI: A measure of body fat calculated by height and weight as below: BMI = Weight (kg) / (Height (m) x Height (m)) 
+.	Body composition score: One of the most popular anthropometric methods for assessment of body fat. It is calculated by skinfold thickness at three different parts of a body; triceps, abdomen, and thigh. 
+The mean values for the pre-study body weight, BMI and body composition score were 65.86kg, 26.7002kg/m2 , and 79.626mm respectively. After the experiment, all outcome indicators decreased and all the decreases were statistically significant. The mean body weight decreased by 1.44 kg, the mean BMI decreased by 0.58 kg/m and the mean body composition 2 score decreased by 3.048mm. This study did not have a comparison group. In other words, all observations were treated. 
+The key finding is that drinking excessive water is effective in reducing weight and body fat . Finally, this paper suggests three scientific evidences of this effect: drinking water induces thermogenesis by increasing blood pressure and metabolic rate, and thus increasing the daily energy expenditure, water plays an important role to metabolize stored fat into energy, and water suppresses a natural appetite. 
 
-waterdata_df <- rbind(watero_df, water1_df)
+2. Critique and Improvement 
+    This experiment failed to establish a control group. It might be because this study is based on the assumption that the weight of participants would not change drastically during the experiment period of eight weeks. This assumption seems reasonable, but the author can make the results more convincing by introducing a control group because there might be a trend among girls to reduce weight for various reasons. 
+In addition, the girls in the experiment were informed of the purpose of the experiment. They might alter their behavior accordingly to reinforce the weight reduction effect or to defy it, which is a form of noncompliance, making the results less credible. Knowing the purpose of the experiment also affect the result of the experiment as through placebo effect. It may psychologically affect the weight of the participants. 
+Therefore, we would like to make some recommendations to improve the experiment design. 
+First, introduce a control group. The control group and treatment group should be assigned randomly to offset any systematic difference between the two groups. Each participants likelihood of getting treated should be the same, and the only difference between the two groups during the experiment should be whether the group is treated or not. Pre-treatment variables such as Caloric intake, amount of exercise, amount of sleep, and so on need to be balanced between control group and treatment group. The control group need to keep drinking whatever amount of water they used to, and the treatment group need to drink 500ml additional water before every meal. We recommend a difference in difference analysis (DiD) to evaluate the causal effect that drinking excessive water has on weight and body fat reduction.
+Second, the experiment should be a blind experiment where participants do not know the purpose of the experiment. Both of control and treatment group should be managed to drink a certain amount of water daily in order to minimize noncompliance; 500ml additional water before every meal three times a day for treatment group and no additional water for control group. 
+Yi, in this case, weight, BMI and body composition score, might decrease with the treatment.
 
-write.csv(waterdata_df, file = "waterdata.csv")
-```
+
+3. Data Analysis 
+3.1. Show Balance on Pretreatment Covariates 
+    Using the new dataset, we estimate the treatment effect. To make sure that the random assignment works, we would like to see if there are any systematic differences between the two groups that might affect the outcome. Therefore, we check the balance on pretreatment covariates between the treatment group and the control group. The pretreatment covariates are age, height, amount of water drunk, caloric intake, amount of sleep, and amount of exercise. We can see that the covariates are not different statistically significantly at the 95% confidence level. 
 
 
-1. Balance table: first balance table for two groups before treatment; then balance table for two groups considering sample attrition.
 ```{r,echo=FALSE}
 water_df <- water_df %>% 
   mutate(treatment = relevel(factor(Di), ref = "0"))
@@ -72,7 +77,7 @@ no.space = TRUE)
 
 ```
 
-```{r}
+```{r, echo=FALSE}
 m_list2 <- list()
 m_list2[[1]] <- felm(pre_sleep ~ Di | 0 | 0 | id, data = water_df) 
 m_list2[[2]] <- felm(pre_exercise ~ Di | 0 | 0 | id, data = water_df) 
@@ -118,11 +123,14 @@ no.space = TRUE)
 ```
 
 
-2. Dropping out 
-Checking the coveriates after removing dropout
-Checking the dropout rates
+3.2. Sample Attrition
+    Since there are some participants dropping out from the study at some time during the experiment, we need to check whether the attrition bias exists. If there is attrition bias, the result of this study can be problematic for two reasons: 1) our conclusion might not be generalizable to the population (external validity); 2) the control group might no longer be a good counterfactual for the treatment group (internal validity). To see if there is attrition bias, we need to check whether the dropouts are random; if random, there would be no attrition bias. The more intuitive way to do this it to see if there is any systematic difference between those who dropped out of the control group and those who dropped out of the treatment group. However, it is because there are too few of them, we decide instead to check whether there is systematic difference between the remaining participants in the two groups. If there is no systematic difference, the dropouts are random and there is not attrition bias.
 
-```{r, results="asis"}
+Checking Pre-treatment Covariates
+    Firstly, we check whether the pre-treatment covariates are balanced between the treatment group and the control group after removing dropouts. We can see that the covariates are not statistically different at the 95% confidence level. Thus, we can conclude that the dropouts are random in terms of those pretreatment covariates.
+
+
+```{r,echo=FALSE}
 #remove dropouts
 waterdrop_df <- water_df %>% filter(drop_out==0)
 
@@ -191,8 +199,11 @@ title = "Balance by Pre-Treatment Covariates After Removing Dropout",
 no.space = TRUE)
 ```
 
+Checking dropout rate
+    Secondly, we check the dropout rate of the treatment group and the control group. If these rates are statistically different, internal validity might be violated. The control group's dropout rate is 8% and the treatment group's dropout rate is 10%. We use two-sample test for equality of proportions to test whether they are statistically different. The result shows that the dropout rates are not statistically different. 
 
-```{r, results="asis", echo=FALSE}
+
+```{r, echo=FALSE}
 #Checking the dropout rates
 
 dropout <- water_df %>% group_by(Di) %>%
@@ -204,10 +215,25 @@ prop.test(x = c(4, 5), n = c(50, 50), correct = FALSE)
 
 ```
 
+Therefore, we conclude that there is no attrition bias resulting from the dropouts. Then, we remove these dropouts from our data.
 
-3. Non-compliance, whether some girls from the treatment group were not treated, whether some girls from the control group received treatment
 
-```{r}
+3.3. Checking Compliance of the Experiments
+
+We then need to confirm whether there is noncompliance in either of the treatment and the control groups. In other words, if some girls from the treatment group did not drink enough water (1.5 litres) or some girls from the control group drank significantly more water compared to what they use to drink , the result of this study would be biased. Therefore, we calculate the amount of extra water drunk by each participant  to examine whether there is noncompliance.
+
+Firstly, we check whether the amount of extra water drunk is normally distributed or not by Shapiro-Wilk test. The null-hypothesis of the shapiro test is that the population is normally distributed. Thus, if the p-value is less than the chosen alpha level, we would reject the null hypothesis and vice versa. 
+
+The result of the test shows that the amount of extra water drunk is normally distributed. The corresponding p-value is 0.8887 for the treatment group and is 0.9741 for the control group. Thus, we can not reject the null-hypothesis. In addition to the shapiro test, we look at normal Q-Q plot. Its linearity suggests that the data is normally distributed.
+
+Secondly, we perform t-test. The null-hypothesis of the t-test is as follows for the two groups:
+Treatment Group : The amount of extra water drunk is equal to 1.5.
+Control Group :The amount of extra water drunk is equal to 0.
+
+The result shows that the p-value is 0.9175 for the treatment group and is 0.1572 for the control group. Therefore, we can not reject the null-hypothesis. Therefore, we have no evidence that there is  noncompliance for the two groups.
+
+
+```{r, echo=FALSE}
 treatment <- water_df %>%
   mutate(extrawater = post_water - pre_water) %>%
   filter(Di == 1) 
@@ -229,15 +255,12 @@ t.test(control$extrawater, mu=0)
 ```
 
 
-The null-hypothesis of the shapiro test is that the population is normally distributed. Thus, if the p-value is less than the chosen alpha level, then the null hypothesis is rejected and there is evidence that the data tested are not from a normally distributed population; in other words, the data are not normal.
+3-4. Estimating the Average Treatment Effect
+    Finally, we calculate the treatment effect by subtracting the change in outcome indicators of the control group from the change in outcome indicators of the treatment group. The weight, BMI, and body composition score for both groups decreased statistically significantly. We also used clustered standard error (cluster on id). 
 
-Conclusion: only the treatment group received treatment and all of them received treatment; no one in the control group received any treatment and the amount of water they drunk did not differ significantly from what they had drunk before the experiment.  
 
-
-4.Estimate ATE
-
-```{r, results="asis"}
-waterdata_df <- read.csv("waterdata.csv")
+```{r, results="asis", echo=FALSE}
+waterdata_df <- read.csv("C:\\Users\\Justin Ho\\Downloads\\PP209-Final-Project-master\\waterdata.csv")
 waterdata_df <- waterdata_df %>%
   filter(drop_out == 0) %>%  
   group_by(Di, postperiod) %>% summarise(avg_weight = round(mean(weight, na.rm = TRUE), 2), avg_comp = round(mean(composition, na.rm = TRUE), 2), avg_BMI = round(mean(weight/height^2, na.rm = TRUE), 2))
@@ -250,23 +273,34 @@ waterdata_df %>% group_by(Di) %>%
 
 #Before-After plot
 
-waterdata_df %>% group_by(Di) %>%
+
+
+```
+
+```{r, echo=FALSE}
+waterdata_df %>%
   ggplot(aes(x=postperiod, y=avg_weight, group=Di)) +
-  geom_line(aes(colour = Di)) +
+  geom_path(aes(colour = Di)) +
   labs(title = "Before-After (weight)", x = "Period", y = "Average Weight") +
   theme_bw()
-  
-waterdata_df %>% group_by(Di) %>%
+
+waterdata_df %>%
   ggplot(aes(x=postperiod, y=avg_comp, group=Di)) +
   geom_path(aes(colour = Di)) +
   labs(title = "Before-After (body composition)", x = "Period", y = "Average Composition") +
   theme_bw()
-
 
 waterdata_df %>% 
   ggplot(aes(x=postperiod, y=avg_BMI, group=Di)) +
   geom_path(aes(colour = Di)) +
   labs(title = "Before-After (BMT)", x = "Period", y = "BMI") +
   theme_bw()
-
 ```
+
+    
+The result of the difference in difference analysis shows a 1.09 kg of weight decrease, a 5.78 mm of body composition score decrease, and a 0.43 kg/m2 of BMI decrease, and the p-value suggests that the results are statistically significant. However, the actual magnitude of the causal effect might be different from these figures because we cannot quantify the magnitude of the Demand Effect in the control group and the treatment group.
+    In this experiment, we reasonably assume that the weight and height are in parallel trends for both groups because participants were randomly assigned and that the weight and height of girls from 18-23 years old do not change so much in 8 weeks. Nevertheless the average weight and the average body composition score of the control group decrease and the decrease is statistically significant. There might be two explanations. First, there might have been some universal trend among young girls of getting skinny. The second reason might be the Demand Effect. In this experiment we did not tell the participants of the purpose of the experiment, however the participants could change their behavior based on their perception of the purpose of the experiment. 
+
+4. Conclusion
+The result of this experiment shows that drinking 1.5 liters more water a day has the effect of reducing weight and body fat among overweight young girls (18 - 23 years old). However, in this experiment, since we do not control for other factors (such as caloric taken and amount of exercise) during the experiment which might affect the outcomes, both of the control and the treatment group might have experienced different influences caused by participants' different behavior. As a result, we cannot clearly say that the causal effect of drinking 1.5 liters of additional water is 1.09 lbs of weight decrease, 5.78 mm of body composition score decrease, and 0.43 kg/m2 of BMI decrease Further experiment controlling these factors is needed to identify the precise causal effect of drinking 1.5 liters of additional water a day.
+
